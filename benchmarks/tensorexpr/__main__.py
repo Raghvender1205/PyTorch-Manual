@@ -1,21 +1,21 @@
 import argparse
 import itertools
-from . import benchmark
+import benchmark
 import os
-from . import tensor_engine
+import tensor_engine
 
-from . import attention      # noqa: F401
-from . import broadcast      # noqa: F401
-from . import concat         # noqa: F401
+import attention      # noqa: F401
+import broadcast      # noqa: F401
+import concat         # noqa: F401
 # from . import conv           # noqa: F401
-from . import elementwise    # noqa: F401
-from . import matmul         # noqa: F401
+import elementwise    # noqa: F401
+import matmul         # noqa: F401
 # from . import normalization  # noqa: F401
 # from . import pooling        # noqa: F401
-from . import reduction      # noqa: F401
-from . import softmax        # noqa: F401
-from . import rnn_eltwise    # noqa: F401
-from . import swish          # noqa: F401
+import reduction      # noqa: F401
+import softmax        # noqa: F401
+import rnn_eltwise    # noqa: F401
+import swish          # noqa: F401
 
 
 def main():

@@ -1,4 +1,4 @@
-from . import benchmark
+import benchmark
 
 
 class ReduceBench(benchmark.Benchmark):

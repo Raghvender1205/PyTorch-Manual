@@ -19,7 +19,7 @@ def set_engine_mode(mode):
 
         tensor_engine = tf_engine.TensorFlowEngine
     elif mode == "pt":
-        from . import pt_engine
+        import pt_engine
 
         tensor_engine = pt_engine.TorchTensorEngine()
     elif mode == "topi":

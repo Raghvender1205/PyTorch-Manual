@@ -1,5 +1,5 @@
-from . import benchmark
-from . import tensor_engine
+import benchmark
+import tensor_engine
 
 class NormalizationBench(benchmark.Benchmark):
     def __init__(self, mode, device, dtype, N, C, H, W):

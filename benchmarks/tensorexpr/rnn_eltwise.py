@@ -1,4 +1,4 @@
-from . import benchmark
+import benchmark
 import torch
 
 class RNNEltwise(benchmark.Benchmark):

@@ -1,4 +1,4 @@
-from . import benchmark
+import benchmark
 import numpy as np
 
 

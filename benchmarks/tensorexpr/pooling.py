@@ -1,4 +1,4 @@
-from . import benchmark
+import benchmark
 
 
 class PoolingBench(benchmark.Benchmark):

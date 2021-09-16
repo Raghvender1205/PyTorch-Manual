@@ -1,4 +1,4 @@
-from . import benchmark
+import benchmark
 import itertools
 import numpy as np
 import torch

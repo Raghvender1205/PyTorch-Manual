@@ -1,5 +1,5 @@
 # Copy of rnn_attention from MLPerf
-from . import benchmark
+import benchmark
 import torch
 
 class BahdanauAttention(benchmark.Benchmark):

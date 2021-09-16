@@ -2,7 +2,7 @@ import contextlib
 import numpy as np
 import os
 import time
-from . import tensor_engine
+import tensor_engine
 import torch
 import json
 
