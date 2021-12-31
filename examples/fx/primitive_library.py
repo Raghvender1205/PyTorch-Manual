@@ -83,3 +83,67 @@ for node in traced.graph.nodes:
 # Recompile after Graph manipulation
 traced.recompile()
 print(traced.code)
+"""
+def forward(self, x, y):
+    float_1 = x.float();  x = None
+    sigmoid = float_1.sigmoid();  float_1 = None
+    half = sigmoid.half();  sigmoid = None
+    float_2 = y.float();  y = None
+    sigmoid_1 = float_2.sigmoid();  float_2 = None
+    half_1 = sigmoid_1.half();  sigmoid_1 = None
+    add_lowp = __main___add_lowp(half, half_1);  half = half_1 = None
+    return add_lowp
+"""
+
+# Add this point, the implementation of `sigmoid_lowp` has been substituted in 
+# for all of the calls to that function
+
+# ********** Inlining calls during tracing *************
+# We are now going to define a Custom Tracer that can selectively inline
+# calls to certain composite operations on-the-fly.
+
+# New instance of our module
+f = Foo()
+
+class InliningTracer(torch.fx.Tracer):
+    FNS_TO_INLINE = [add_lowp]
+
+    def create_node(self, kind, target, args, kwargs, name=None, type_exp=None):
+        if kind == 'call_function' and target in self.FNS_TO_INLINE:
+            # Trace through the implementation of the function rather than create a node.
+            proxy_args = torch.fx.node.map_arg(args, torch.fx.Proxy)
+            proxy_kwargs = torch.fx.node.map_arg(kwargs, torch.fx.Proxy)
+            return target(*proxy_args, **proxy_kwargs).node
+        else:
+            return super().create_node(kind, target, args, kwargs, name, type_expr=None)
+
+tracer = InliningTracer()
+graph = tracer.trace()
+module = torch.fx.GraphModule(f, graph)
+print(module.code)
+"""
+Output would be:
+
+def forward(self, x, y):
+    sigmoid_lowp = __main___sigmoid_lowp(x);  x = None
+    sigmoid_lowp_1 = __main___sigmoid_lowp(y);  y = None
+    float_1 = sigmoid_lowp.float();  sigmoid_lowp = None
+    float_2 = sigmoid_lowp_1.float();  sigmoid_lowp_1 = None
+    add = float_1 + float_2;  float_1 = float_2 = None
+    half = add.half();  add = None
+    return half
+"""
+
+# As you can see, the implementation for `add_lowp` has been
+# inlined in the course of tracing with our InliningTracer.
+# Such functionality can be used to, for example, implement
+# a backend that wants to see the lowered form of some operations
+# but the high-level form of another.
+
+# ***** Future direction *****
+#
+# We may define an API, such as `Tracer.is_leaf_function`, that
+# Tracer implementers can use to more easily specify the inlining
+# behavior implemented in InliningTracer. Such a method would return
+# True by default, but a Tracer can override it and return `False` for
+# functions the Tracer wants to be traced through.
