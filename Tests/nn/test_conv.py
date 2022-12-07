@@ -7,7 +7,9 @@ from itertools import product
 import torch
 import torch.autograd.forward_ad as fwAD
 import torch.backends.cudnn as cudnn
+from torch.backends import mkldnn
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.serialization import SourceChangeWarning # Use SourceChangeWarning
 from torch.testing._internal.common_dtype import floating_types_and, floating_and_complex_types_and
 from torch.testing._internal.common_utils import run_tests, \
@@ -63,5 +65,30 @@ class TestConvolutionNN(NNTestCase):
             with self.assertRaisesRegex(RuntimeError, 'non-positive stride is not supported'):
                 module(input)
             
+    # Mismatch Shape Conv2d
+    def test_mismatch_shape_conv2d(self):
+        for dtype in (torch.float, torch.cfloat):
+            x = torch.randn(1, 10, 1, 28, 28, dtype=dtype)
+            w = torch.randn(6, 1, 5, 5, dtype=dtype)
+
+            with self.assertRaisesRegex(RuntimeError,
+                                        r'Expected 3D \(unbatched\) or 4D \(batched\) input to conv2d, but got ' +
+                                        r'input of size: \[1, 10, 1, 28, 28\]'):
+                F.conv2d(x, w)
+    
+    # Conv2d Discontigous Weight Check
+    def test_conv2d_discontigous_weight(self):
+        for dtype in (torch.float, torch.cfloat):
+            x = torch.ones(64, 16, 16, 16, dtype=dtype)
+            weight = torch.arange(0, 1.0, 1 / 2.0 ** 10).reshape(32, 16, 1, 2).to(dtype)[:, :, :, ::2]
+            self.assertFalse(weight.is_contiguous())
+            y = F.conv2d(x, weight, None)
+            if mkldnn.is_available():
+                # Disable MKLDNN, so either NNPACK or THCNN would be used
+                with mkldnn.flags(enabled=False):
+                    y_ = F.conv2d(x, weight, None)
+                    self.assertEqual(y, y_)
+            self.assertEqual(y.sum(), 4186112.)
+
 if __name__ == '__main__':
     run_tests()
